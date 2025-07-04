@@ -40,6 +40,7 @@ import { setMaxSizedBoxDebugging } from './ui/components/shared/MaxSizedBox.js';
 import { handleSpecCommand } from './commands/spec_command.js';
 import { handleTasksCommand } from './commands/tasks_command.js';
 import { handlePlanCommand } from './commands/plan_command.js';
+import { analyzeCommand } from './commands/analyze_command.js';
 
 // Helper for spec command arguments
 interface SpecCommandArgs {
@@ -121,7 +122,7 @@ export async function main() {
   const commandArgs = args.slice(1);
 
   // Handle custom commands immediately to bypass all config loading issues
-  if (command === 'spec' || command === 'tasks' || command === 'plan') {
+  if (command === 'spec' || command === 'tasks' || command === 'plan' || command === 'analyze') {
     try {
       const workspaceRoot = process.cwd();
       const settings = loadSettings(workspaceRoot);
@@ -187,6 +188,24 @@ export async function main() {
          // `plan` command doesn't strictly need API key unless it were to regenerate something
          // For now, it's read-only.
          await handlePlanCommand(config); // Config might be used by plan command in future for other things
+         process.exit(0);
+       } else if (command === 'analyze') {
+         // Parse analyze command options
+         const file = commandArgs.find((arg, i) => commandArgs[i-1] === '--file') || undefined;
+         const watch = commandArgs.includes('--watch');
+         const full = commandArgs.includes('--full');
+         const fix = commandArgs.includes('--fix');
+         
+         // Ensure API key is available for analyze command
+         if (!settings.merged.selectedAuthType && !process.env.GEMINI_API_KEY) {
+           console.error("Error: GEMINI_API_KEY not set. The 'analyze' command requires API key authentication if no other auth method is configured.");
+           process.exit(1);
+         }
+         if (process.env.GEMINI_API_KEY && !settings.merged.selectedAuthType) {
+           settings.setValue(SettingScope.User, 'selectedAuthType', AuthType.USE_GEMINI);
+         }
+
+         await analyzeCommand({ file, watch, full, fix });
          process.exit(0);
        }
      } catch (error: unknown) {
