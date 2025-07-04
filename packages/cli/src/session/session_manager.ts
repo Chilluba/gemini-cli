@@ -19,8 +19,8 @@ export async function loadSession(): Promise<SessionData | null> {
     const sessionData = JSON.parse(fileContent) as SessionData;
     // TODO: Add version check and potential migration logic if session format changes
     return sessionData;
-  } catch (error) {
-    if (error.code === 'ENOENT') {
+  } catch (error: unknown) {
+    if (error instanceof Error && 'code' in error && (error as any).code === 'ENOENT') {
       return null; // No session file found, which is normal
     }
     console.error(`Error loading session file (${SESSION_FILE_NAME}):`, error);

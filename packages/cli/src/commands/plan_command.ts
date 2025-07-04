@@ -65,12 +65,13 @@ export async function handlePlanCommand(config: Config): Promise<void> {
     console.log('-----------------------------------\n');
     console.log(`To edit the specification, please open '${specFileName}' in your preferred text editor.`);
     console.log(`If you modify it, you may want to regenerate tasks using: gemini tasks --generate\n`);
-  } catch (error) {
-    if (error.code === 'ENOENT') {
+  } catch (error: unknown) {
+    if (error instanceof Error && 'code' in error && (error as any).code === 'ENOENT') {
       console.log(`Specification file '${specFileName}' not found.`);
       console.log("You can generate one using: gemini spec \"<your project idea>\"\n");
     } else {
-      console.error(`Error reading specification file '${specFileName}':`, error.message);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error(`Error reading specification file '${specFileName}':`, errorMessage);
     }
   }
 
@@ -79,12 +80,13 @@ export async function handlePlanCommand(config: Config): Promise<void> {
     const tasksFileContent = await fs.readFile(tasksFilePathFull, 'utf-8');
     const tasksData = JSON.parse(tasksFileContent) as TasksFile;
     displayTasksFromFile(tasksData, tasksFileName);
-  } catch (error) {
-    if (error.code === 'ENOENT') {
+  } catch (error: unknown) {
+    if (error instanceof Error && 'code' in error && (error as any).code === 'ENOENT') {
       console.log(`Tasks file '${tasksFileName}' not found.`);
       console.log("You can generate one from a spec.md using: gemini tasks --generate\n");
     } else {
-      console.error(`Error reading or parsing tasks file '${tasksFileName}':`, error.message);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error(`Error reading or parsing tasks file '${tasksFileName}':`, errorMessage);
     }
   }
 

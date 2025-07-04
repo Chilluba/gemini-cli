@@ -36,6 +36,7 @@ export interface ContentGenerator {
 
 export enum AuthType {
   LOGIN_WITH_GOOGLE_PERSONAL = 'oauth-personal',
+  LOGIN_WITH_GOOGLE_WORKSPACE = 'oauth-workspace',
   USE_GEMINI = 'gemini-api-key',
   USE_VERTEX_AI = 'vertex-ai',
 }

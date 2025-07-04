@@ -72,67 +72,73 @@ gemini
 > Give me a summary of all of the changes that went in yesterday
 ```
 
-## Project Planning and Management (New Feature)
+## Project Planning and Management (✅ Implemented)
 
-Gemini CLI now includes experimental features inspired by agentic workflows to help you plan and manage software projects directly from your terminal. This allows for a more structured approach to code generation and task tracking.
+Gemini CLI now includes project planning and task management features inspired by agentic workflows. These features help you plan and manage software projects directly from your terminal with AI assistance.
 
-The core workflow involves:
-1.  Generating a project specification (`spec.md`) based on your initial idea (optionally including multimedia context).
-2.  Reviewing and editing the `spec.md` file.
-3.  Generating a list of epics and tasks (`tasks.json`) from the specification.
-4.  Viewing your plan and tasks.
+**Key Features:**
+✅ Project specification generation with multimedia support  
+✅ AI-powered task decomposition and tracking  
+✅ Human-in-the-loop workflow with approval checkpoints  
+✅ Session state management and project persistence  
+✅ Automated error detection with AI-powered suggestions  
+✅ Multimodal input processing (images, audio)  
 
-These features use AI to help break down your project and organize it.
-
-### New Project Planning Commands
+### Project Planning Commands
 
 *   **`gemini spec <initial prompt> [--image /path/to/img.png] [--audio /path/to/audio.wav]`**
-    *   Generates a project specification in Markdown (`spec.md`) based on your `<initial prompt>`.
-    *   You can provide images (`--image` or `-i`) and audio files (`--audio` or `-a`) as additional context. Multiple flags can be used.
-    *   Image content will be described using Gemini Vision, and audio content will be noted (placeholder for transcription).
-    *   After generation, you'll be prompted to review and approve `spec.md`.
-    *   Example: `gemini spec "Create a Python web server for a to-do list" --image ./mockup.png`
+    *   Generates a comprehensive project specification (`spec.md`) using AI
+    *   Supports multimodal input: images are processed with Gemini Vision API
+    *   Audio files are noted for future transcription integration
+    *   Interactive approval workflow before proceeding
+    *   Example: `gemini spec "Create a React todo app with TypeScript" --image ./mockup.png`
 
 *   **`gemini tasks [--generate]`**
-    *   Manages the `tasks.json` file, which contains epics and tasks derived from `spec.md`.
-    *   If `tasks.json` exists and `--generate` is not provided, it displays the current tasks.
-    *   If `tasks.json` does not exist, or if `--generate` is specified, it will:
-        1.  Read `spec.md`.
-        2.  Use AI to parse `spec.md` into a structured list of epics and tasks.
-        3.  Save this list to `tasks.json`.
-        4.  Display the generated tasks.
-    *   Status for new tasks defaults to "pending".
+    *   Smart task management with AI-powered epic and task breakdown
+    *   Displays existing tasks if `tasks.json` exists
+    *   Generates structured tasks from `spec.md` when needed
+    *   JSON format with status tracking (pending/in progress/done)
+    *   Example: `gemini tasks --generate`
 
 *   **`gemini plan`**
-    *   Displays the current project plan.
-    *   Shows the content of `spec.md`.
-    *   Shows the list of tasks from `tasks.json`.
-    *   Provides guidance on how to edit `spec.md` and regenerate tasks if needed.
+    *   Comprehensive project overview dashboard
+    *   Shows complete `spec.md` content
+    *   Displays organized task breakdown
+    *   Provides next-step guidance
+    *   Session state information
 
-### Typical Project Workflow Example
+### Enhanced Workflow Example
 
-1.  **Start a new project idea:**
+1.  **Generate Project Specification:**
     ```bash
-    gemini spec "Develop a command-line tool to manage personal notes, written in Go. It should support adding, listing, and deleting notes. Notes should be stored in a local JSON file." --image ./notes_cli_mockup.jpg
+    gemini spec "Build a modern todo list web app with React, TypeScript, and local storage"
     ```
-    *(This generates `spec.md`. You'll be prompted to review and approve it.)*
+    *(Creates `spec.md` with detailed project breakdown, prompts for approval)*
 
-2.  **Review and Edit (Manual Step):**
-    Open `spec.md` in your favorite text editor and make any necessary changes or refinements.
+2.  **Review and Edit:**
+    Edit `spec.md` in your preferred editor to refine requirements
 
-3.  **Generate Tasks:**
+3.  **Generate Task Breakdown:**
     ```bash
     gemini tasks --generate
     ```
-    *(This reads your (potentially edited) `spec.md`, creates `tasks.json`, and displays the tasks.)*
+    *(AI parses `spec.md` into structured epics and tasks, saves to `tasks.json`)*
 
-4.  **View Your Plan:**
+4.  **Monitor Project Progress:**
     ```bash
     gemini plan
     ```
-    *(This shows you the contents of `spec.md` and `tasks.json`.)*
+    *(Complete overview of specification and task status)*
 
-*(Future development will focus on executing these tasks and providing more advanced agentic capabilities like automated debugging and error recovery.)*
+### Advanced Features
+
+**Human-in-the-Loop (HITL):** Interactive approval points ensure you maintain control over the AI-generated content.
+
+**Error Recovery:** Built-in error detection with AI-powered analysis and fix suggestions.
+
+**Session Management:** Automatic state persistence in `.gemini-session.json` for workflow resumption.
+
+**Multimodal Processing:** Support for image analysis (Gemini Vision) and audio file integration.
 
 ### Next steps
 

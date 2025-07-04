@@ -114,69 +114,106 @@ async function relaunchWithAdditionalArgs(additionalArgs: string[]) {
 }
 
 export async function main() {
-  const workspaceRoot = process.cwd();
-  const settings = loadSettings(workspaceRoot);
-
-  await cleanupCheckpoints();
-  if (settings.errors.length > 0) {
-    for (const error of settings.errors) {
-      let errorMessage = `Error in ${error.path}: ${error.message}`;
-      if (!process.env.NO_COLOR) {
-        errorMessage = `\x1b[31m${errorMessage}\x1b[0m`;
-      }
-      console.error(errorMessage);
-      console.error(`Please fix ${error.path} and try again.`);
-    }
-    process.exit(1);
-  }
-
-  const extensions = loadExtensions(workspaceRoot);
-  const config = await loadCliConfig(settings.merged, extensions, sessionId);
-
-  // Command line argument parsing for new commands
+  // Command line argument parsing for new commands FIRST before any other processing
+  // This completely avoids yargs rejecting unknown commands
   const args = process.argv.slice(2); // Skip 'node' and script path
   const command = args[0];
   const commandArgs = args.slice(1);
 
-  if (command === 'spec') {
-    const specArgs = parseSpecArgs(commandArgs);
-    if (!specArgs.prompt && specArgs.imagePaths.length === 0 && specArgs.audioPaths.length === 0) {
-      console.error('Error: The "spec" command requires an initial prompt or multimedia inputs.');
-      console.log('Usage: gemini spec <your initial project idea> [--image /path/to/img.png] [--audio /path/to/audio.wav]');
-      process.exit(1);
-    }
-    // Ensure API key is available for spec command if not using other auth, especially if multimedia processing is involved.
-    if (!settings.merged.selectedAuthType && !process.env.GEMINI_API_KEY) {
-       console.error("Error: GEMINI_API_KEY not set. The 'spec' command requires API key authentication if no other auth method is configured, especially for multimedia processing.");
-       process.exit(1);
-    }
-    if (process.env.GEMINI_API_KEY && !settings.merged.selectedAuthType) {
-        settings.setValue(SettingScope.User, 'selectedAuthType', AuthType.USE_GEMINI);
-    }
+  // Handle custom commands immediately to bypass all config loading issues
+  if (command === 'spec' || command === 'tasks' || command === 'plan') {
+    try {
+      const workspaceRoot = process.cwd();
+      const settings = loadSettings(workspaceRoot);
+      
+      if (settings.errors.length > 0) {
+        for (const error of settings.errors) {
+          let errorMessage = `Error in ${error.path}: ${error.message}`;
+          if (!process.env.NO_COLOR) {
+            errorMessage = `\x1b[31m${errorMessage}\x1b[0m`;
+          }
+          console.error(errorMessage);
+          console.error(`Please fix ${error.path} and try again.`);
+        }
+        process.exit(1);
+      }
 
-    await handleSpecCommand(specArgs.prompt, specArgs.imagePaths, specArgs.audioPaths, config);
-    process.exit(0);
-  } else if (command === 'tasks') {
-    const forceGenerate = commandArgs.includes('--generate');
-    // Ensure API key is available if needed for task generation
-    if (forceGenerate || !fs.existsSync('tasks.json')) { // fs.existsSync would need to be imported and run before this
-        // A simplified check: if we might generate, ensure auth is plausible.
-        if (!settings.merged.selectedAuthType && !process.env.GEMINI_API_KEY) {
-            console.error("Error: GEMINI_API_KEY not set. The 'tasks --generate' command (or first run) requires API key authentication if no other auth method is configured.");
+      const extensions = loadExtensions(workspaceRoot);
+      
+      // For these custom commands, we need to temporarily modify argv to avoid yargs issues
+      const originalArgv = process.argv;
+      // Remove the custom command and replace with an empty prompt to make yargs happy
+      process.argv = [process.argv[0], process.argv[1]];
+      
+      const config = await loadCliConfig(settings.merged, extensions, sessionId);
+      
+             // Restore original argv
+       process.argv = originalArgv;
+
+       if (command === 'spec') {
+         const specArgs = parseSpecArgs(commandArgs);
+         if (!specArgs.prompt && specArgs.imagePaths.length === 0 && specArgs.audioPaths.length === 0) {
+           console.error('Error: The "spec" command requires an initial prompt or multimedia inputs.');
+           console.log('Usage: gemini spec <your initial project idea> [--image /path/to/img.png] [--audio /path/to/audio.wav]');
+           process.exit(1);
+         }
+         // Ensure API key is available for spec command if not using other auth, especially if multimedia processing is involved.
+         if (!settings.merged.selectedAuthType && !process.env.GEMINI_API_KEY) {
+            console.error("Error: GEMINI_API_KEY not set. The 'spec' command requires API key authentication if no other auth method is configured, especially for multimedia processing.");
             process.exit(1);
-        }
-        if (process.env.GEMINI_API_KEY && !settings.merged.selectedAuthType) {
-            settings.setValue(SettingScope.User, 'selectedAuthType', AuthType.USE_GEMINI);
-        }
-    }
-    await handleTasksCommand(config, forceGenerate);
-    process.exit(0);
-  } else if (command === 'plan') {
-    // `plan` command doesn't strictly need API key unless it were to regenerate something
-    // For now, it's read-only.
-    await handlePlanCommand(config); // Config might be used by plan command in future for other things
-    process.exit(0);
-  }
+         }
+         if (process.env.GEMINI_API_KEY && !settings.merged.selectedAuthType) {
+             settings.setValue(SettingScope.User, 'selectedAuthType', AuthType.USE_GEMINI);
+         }
+
+         await handleSpecCommand(specArgs.prompt, specArgs.imagePaths, specArgs.audioPaths, config);
+         process.exit(0);
+       } else if (command === 'tasks') {
+         const forceGenerate = commandArgs.includes('--generate');
+         // Ensure API key is available if needed for task generation
+         if (forceGenerate || !fs.existsSync('tasks.json')) { // fs.existsSync would need to be imported and run before this
+             // A simplified check: if we might generate, ensure auth is plausible.
+             if (!settings.merged.selectedAuthType && !process.env.GEMINI_API_KEY) {
+                 console.error("Error: GEMINI_API_KEY not set. The 'tasks --generate' command (or first run) requires API key authentication if no other auth method is configured.");
+                 process.exit(1);
+             }
+             if (process.env.GEMINI_API_KEY && !settings.merged.selectedAuthType) {
+                 settings.setValue(SettingScope.User, 'selectedAuthType', AuthType.USE_GEMINI);
+             }
+         }
+         await handleTasksCommand(config, forceGenerate);
+         process.exit(0);
+       } else if (command === 'plan') {
+         // `plan` command doesn't strictly need API key unless it were to regenerate something
+         // For now, it's read-only.
+         await handlePlanCommand(config); // Config might be used by plan command in future for other things
+         process.exit(0);
+       }
+     } catch (error: unknown) {
+       console.error('Error handling custom command:', error);
+       process.exit(1);
+     }
+   }
+
+   // For all other commands, proceed with normal CLI flow
+   const workspaceRoot = process.cwd();
+   const settings = loadSettings(workspaceRoot);
+
+   await cleanupCheckpoints();
+   if (settings.errors.length > 0) {
+     for (const error of settings.errors) {
+       let errorMessage = `Error in ${error.path}: ${error.message}`;
+       if (!process.env.NO_COLOR) {
+         errorMessage = `\x1b[31m${errorMessage}\x1b[0m`;
+       }
+       console.error(errorMessage);
+       console.error(`Please fix ${error.path} and try again.`);
+     }
+     process.exit(1);
+   }
+
+       const extensions = loadExtensions(workspaceRoot);
+    const config = await loadCliConfig(settings.merged, extensions, sessionId);
 
   // set default fallback to gemini api key
   // this has to go after load cli because thats where the env is set

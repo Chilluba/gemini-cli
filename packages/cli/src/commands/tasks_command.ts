@@ -1,8 +1,10 @@
-// Content from the block above
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
-import { AuthType, Config, Content } from '@google/gemini-cli-core';
+import { AuthType, Config } from '@google/gemini-cli-core';
 import { saveSession, loadSession } from '../session/session_manager.js';
+
+// Import Content type from genai package
+import type { Content } from '@google/genai';
 
 interface Task {
   title: string;
@@ -25,8 +27,8 @@ async function ensureSpecFileExists(): Promise<string> {
   try {
     const specContent = await fs.readFile(SPEC_FILE_PATH, 'utf-8');
     return specContent;
-  } catch (error) {
-    if (error.code === 'ENOENT') {
+  } catch (error: unknown) {
+    if (error instanceof Error && 'code' in error && (error as any).code === 'ENOENT') {
       console.error(
         `Error: ${SPEC_FILE_PATH} not found. Please generate it using 'gemini spec <prompt>' first.`,
       );
@@ -58,7 +60,7 @@ JSON output:`;
     const cgConfig = config.getContentGeneratorConfig();
     if (!cgConfig) {
         let errorMsg = "Content generator configuration not found for task parsing.";
-        if (!process.env.GEMINI_API_KEY && config.getAuthType() !== AuthType.LOGIN_WITH_GOOGLE_PERSONAL && config.getAuthType() !== AuthType.LOGIN_WITH_GOOGLE_WORKSPACE) {
+        if (!process.env.GEMINI_API_KEY) {
             errorMsg += " Hint: If using an API key, ensure GEMINI_API_KEY environment variable is set.";
         }
         throw new Error(errorMsg);
@@ -87,9 +89,10 @@ JSON output:`;
     // No need to strip markdown backticks if the API behaves as expected.
     return JSON.parse(responseText) as TasksFile;
 
-  } catch (error) {
-    let detailedError = `Error parsing spec with AI: ${error.message}`;
-    if (error.message.includes("JSON.parse")) {
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    let detailedError = `Error parsing spec with AI: ${errorMessage}`;
+    if (errorMessage.includes("JSON.parse")) {
         detailedError += "\nThe AI's response was not valid JSON. You might need to refine the prompt, check spec.md, or the model's ability to return clean JSON for this request.";
     }
     console.error(detailedError);
@@ -130,8 +133,8 @@ export async function handleTasksCommand(config: Config, forceGenerate: boolean 
       displayTasks(tasksData);
       console.log(`\nTo regenerate tasks from ${SPEC_FILE_PATH}, run 'gemini tasks --generate'.`);
       return;
-    } catch (error) {
-      if (error.code === 'ENOENT') {
+    } catch (error: unknown) {
+      if (error instanceof Error && 'code' in error && (error as any).code === 'ENOENT') {
         console.log(`${TASKS_FILE_PATH} not found. Will attempt to generate it from ${SPEC_FILE_PATH}.`);
         // Proceed to generation logic
       } else {

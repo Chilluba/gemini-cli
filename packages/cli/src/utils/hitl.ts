@@ -16,7 +16,8 @@ export async function confirmProceed(promptMessage: string): Promise<boolean> {
 }
 
 
-import { AuthType, Content } from '@google/gemini-cli-core'; // Added AuthType and Content
+import { AuthType } from '@google/gemini-cli-core'; // Added AuthType
+import type { Content } from '@google/genai'; // Import Content from genai package
 
 // Actual AI-powered error analysis
 async function analyzeErrorAndSuggestFix(
@@ -40,7 +41,7 @@ async function analyzeErrorAndSuggestFix(
     const cgConfig = config.getContentGeneratorConfig();
     if (!cgConfig) {
       let errorMsg = "Content generator configuration not found for error analysis.";
-      if (!process.env.GEMINI_API_KEY && config.getAuthType() !== AuthType.LOGIN_WITH_GOOGLE_PERSONAL && config.getAuthType() !== AuthType.LOGIN_WITH_GOOGLE_WORKSPACE) {
+      if (!process.env.GEMINI_API_KEY) {
           errorMsg += " Hint: If using an API key, ensure GEMINI_API_KEY environment variable is set.";
       }
       console.error(errorMsg);
@@ -84,9 +85,10 @@ Suggested Fix: [Specific command or action]
       return "AI analysis did not return a suggestion.";
     }
     return responseText.trim();
-  } catch (aiError) {
+  } catch (aiError: unknown) {
+    const errorMessage = aiError instanceof Error ? aiError.message : String(aiError);
     console.error('Error during AI analysis for fix suggestion:', aiError);
-    return `AI analysis failed: ${aiError.message}. Basic suggestion: Check error logs and search online.`;
+    return `AI analysis failed: ${errorMessage}. Basic suggestion: Check error logs and search online.`;
   }
 }
 

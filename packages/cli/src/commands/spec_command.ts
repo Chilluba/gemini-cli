@@ -1,9 +1,11 @@
 import * as fs from 'node:fs/promises';
-// import * as readline from 'node:readline/promises'; // No longer directly used here
-import { AuthType, Config, Content } from '@google/gemini-cli-core';
+import { AuthType, Config } from '@google/gemini-cli-core';
 import { confirmProceed } from '../utils/hitl.js';
 import { saveSession } from '../session/session_manager.js';
 import { processImage, processAudio } from '../processing/multimodal_processor.js';
+
+// Import Content type from genai package
+import type { Content } from '@google/genai';
 
 export async function handleSpecCommand(
   initialTextPrompt: string,
@@ -56,7 +58,7 @@ Markdown Specification:`;
     if (!contentGeneratorConfig) {
         console.error("Error: Content generator configuration not found. Ensure authentication is set up.");
         // Attempt to guide the user if API key is the likely method for this standalone command
-        if (!process.env.GEMINI_API_KEY && config.getAuthType() !== AuthType.LOGIN_WITH_GOOGLE_PERSONAL && config.getAuthType() !== AuthType.LOGIN_WITH_GOOGLE_WORKSPACE) {
+        if (!process.env.GEMINI_API_KEY) {
             console.error("Hint: If using an API key, ensure GEMINI_API_KEY environment variable is set.");
         }
         process.exit(1);

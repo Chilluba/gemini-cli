@@ -1,0 +1,105 @@
+{
+  "epics": [
+    {
+      "title": "Project Setup and Foundation",
+      "tasks": [
+        {
+          "title": "Initialize React project with TypeScript",
+          "status": "pending"
+        },
+        {
+          "title": "Set up component structure and folder organization",
+          "status": "pending"
+        },
+        {
+          "title": "Configure CSS modules for styling",
+          "status": "pending"
+        },
+        {
+          "title": "Set up development environment and build tools",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "title": "Core Components Development",
+      "tasks": [
+        {
+          "title": "Create Main App Component with layout wrapper",
+          "status": "pending"
+        },
+        {
+          "title": "Implement Task List Component with filtering",
+          "status": "pending"
+        },
+        {
+          "title": "Build Task Item Component with checkbox and actions",
+          "status": "pending"
+        },
+        {
+          "title": "Create Add Task Form with input validation",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "title": "State Management and Data Persistence",
+      "tasks": [
+        {
+          "title": "Implement task CRUD operations with React hooks",
+          "status": "pending"
+        },
+        {
+          "title": "Add local storage integration for data persistence",
+          "status": "pending"
+        },
+        {
+          "title": "Create custom hooks for task management",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "title": "User Interface and Styling",
+      "tasks": [
+        {
+          "title": "Design and implement clean, modern UI components",
+          "status": "pending"
+        },
+        {
+          "title": "Add responsive layout for mobile and desktop",
+          "status": "pending"
+        },
+        {
+          "title": "Implement dark/light theme toggle functionality",
+          "status": "pending"
+        },
+        {
+          "title": "Add smooth animations for task interactions",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "title": "Testing and Polish",
+      "tasks": [
+        {
+          "title": "Write unit tests for components and hooks",
+          "status": "pending"
+        },
+        {
+          "title": "Perform cross-browser testing",
+          "status": "pending"
+        },
+        {
+          "title": "Bug fixes and performance optimization",
+          "status": "pending"
+        },
+        {
+          "title": "Final UI polish and accessibility improvements",
+          "status": "pending"
+        }
+      ]
+    }
+  ]
+}

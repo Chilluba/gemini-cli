@@ -1,8 +1,10 @@
-// Content from the typescript block above
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
-import { Config, Content, Part, AuthType } from '@google/gemini-cli-core';
+import { Config, AuthType } from '@google/gemini-cli-core';
 import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from '@google/generative-ai'; // For direct Vision model use
+
+// Import types from genai package
+import type { Part } from '@google/generative-ai';
 
 // Helper to convert local file path to a generable part
 async function fileToGenerativePart(filePath: string, mimeType: string): Promise<Part> {
@@ -68,12 +70,13 @@ export async function processImage(imagePath: string, config: Config): Promise<s
       return `Image Content (${path.basename(imagePath)}):\n[No description returned by AI for this image.]\n`;
     }
 
-  } catch (error) {
-    console.error(`Error processing image ${imagePath}:`, error.message);
-    if (error.code === 'ENOENT') {
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error(`Error processing image ${imagePath}:`, errorMessage);
+    if (error instanceof Error && 'code' in error && (error as any).code === 'ENOENT') {
         return `Image Content (${path.basename(imagePath)}):\n[Error: Image file not found at ${imagePath}]\n`;
     }
-    return `Image Content (${path.basename(imagePath)}):\n[Error processing image: ${error.message}]\n`;
+    return `Image Content (${path.basename(imagePath)}):\n[Error processing image: ${errorMessage}]\n`;
   }
 }
 
@@ -85,11 +88,12 @@ export async function processAudio(audioPath: string, config: Config): Promise<s
     const placeholderText = `Audio Content (${path.basename(audioPath)}):\n[Audio transcription for '${audioPath}' would be integrated here. This is a placeholder as direct Whisper API access via the current Gemini client is not standard or a specific audio model in Gemini is not being used here. Future implementation could involve a separate Whisper client, a local tool, or a Gemini model fine-tuned for audio transcription if available and configured.]\n`;
     console.log(`Placeholder for audio processing of ${audioPath} completed.`);
     return placeholderText;
-  } catch (error) {
-     console.error(`Error accessing audio file ${audioPath}:`, error.message);
-     if (error.code === 'ENOENT') {
+  } catch (error: unknown) {
+     const errorMessage = error instanceof Error ? error.message : String(error);
+     console.error(`Error accessing audio file ${audioPath}:`, errorMessage);
+     if (error instanceof Error && 'code' in error && (error as any).code === 'ENOENT') {
         return `Audio Content (${path.basename(audioPath)}):\n[Error: Audio file not found at ${audioPath}]\n`;
     }
-    return `Audio Content (${path.basename(audioPath)}):\n[Error accessing audio file: ${error.message}]\n`;
+    return `Audio Content (${path.basename(audioPath)}):\n[Error accessing audio file: ${errorMessage}]\n`;
   }
 }
