@@ -41,6 +41,7 @@ import { handleSpecCommand } from './commands/spec_command.js';
 import { handleTasksCommand } from './commands/tasks_command.js';
 import { handlePlanCommand } from './commands/plan_command.js';
 import { analyzeCommand } from './commands/analyze_command.js';
+import { handleEditCommand } from './commands/edit_command.js';
 
 // Helper for spec command arguments
 interface SpecCommandArgs {
@@ -122,7 +123,7 @@ export async function main() {
   const commandArgs = args.slice(1);
 
   // Handle custom commands immediately to bypass all config loading issues
-  if (command === 'spec' || command === 'tasks' || command === 'plan' || command === 'analyze') {
+  if (command === 'spec' || command === 'tasks' || command === 'plan' || command === 'analyze' || command === 'edit') {
     try {
       const workspaceRoot = process.cwd();
       const settings = loadSettings(workspaceRoot);
@@ -206,6 +207,54 @@ export async function main() {
          }
 
          await analyzeCommand({ file, watch, full, fix });
+         process.exit(0);
+       } else if (command === 'edit') {
+         // Parse edit command: gemini edit <file> <prompt> [options]
+         const filePath = commandArgs[0];
+         const promptStartIndex = 1;
+         const optionFlags = ['--dry-run', '--no-backup', '--auto-apply', '--context'];
+         
+         // Find where options start
+         let promptEndIndex = commandArgs.length;
+         for (let i = promptStartIndex; i < commandArgs.length; i++) {
+           if (optionFlags.some(flag => commandArgs[i].startsWith(flag))) {
+             promptEndIndex = i;
+             break;
+           }
+         }
+         
+         const promptParts = commandArgs.slice(promptStartIndex, promptEndIndex);
+         const prompt = promptParts.join(' ');
+         
+         if (!filePath || !prompt) {
+           console.error('Usage: gemini edit <file> <prompt> [--dry-run] [--no-backup] [--auto-apply] [--context file1,file2]');
+           process.exit(1);
+         }
+         
+         // Ensure API key is available for edit command
+         if (!settings.merged.selectedAuthType && !process.env.GEMINI_API_KEY) {
+           console.error("Error: GEMINI_API_KEY not set. The 'edit' command requires API key authentication if no other auth method is configured.");
+           process.exit(1);
+         }
+         if (process.env.GEMINI_API_KEY && !settings.merged.selectedAuthType) {
+           settings.setValue(SettingScope.User, 'selectedAuthType', AuthType.USE_GEMINI);
+         }
+         
+         // Parse options
+         const dryRun = commandArgs.includes('--dry-run');
+         const noBackup = commandArgs.includes('--no-backup');
+         const autoApply = commandArgs.includes('--auto-apply');
+         const contextIndex = commandArgs.findIndex(arg => arg === '--context');
+         const contextFiles = contextIndex !== -1 && contextIndex + 1 < commandArgs.length 
+           ? commandArgs[contextIndex + 1].split(',') 
+           : undefined;
+         
+         await handleEditCommand(filePath, prompt, {
+           dryRun,
+           backup: !noBackup,
+           autoApply,
+           context: contextFiles
+         });
          process.exit(0);
        }
      } catch (error: unknown) {
